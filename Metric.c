@@ -42,7 +42,7 @@ void verify_metric(double gcov[NDIM][NDIM], double gcon[NDIM][NDIM]) {
 
 
 void calculate_metric(double x[NDIM], double g[NDIM][NDIM], double g_inv[NDIM][NDIM]) {
-    double r = x[1] + 3;
+    double r = x[1] + 4;
     double theta = x[2];
     double M = 1.0;   
     double sin_theta2 = sin(theta) * sin(theta);
@@ -102,7 +102,6 @@ void calculate_christoffel(double X[NDIM], double h, double gamma[NDIM][NDIM][ND
             for (int mu = 0; mu < NDIM; mu++) {
                 gamma[lam][nu][mu] = 0.0;
                 for (int kap = 0; kap < NDIM; kap++) {
-                    // gamma[lam][nu][mu] = g_inv[lam][kap] * (symétrisation)
                     gamma[lam][nu][mu] += g_inv[lam][kap] * tmp[kap][nu][mu];
                 }
             }
