@@ -6,6 +6,8 @@ SRCS = Matrix.c \
 	   Metric.c \
 	   Tensor.c \
 	   Utils.c \
+	   Grid.c \
+	   Kerr.c \
 	   main.c
 
 CFLAGS = -O3 -lm -ffast-math -mavx2 -mfma -march=native 

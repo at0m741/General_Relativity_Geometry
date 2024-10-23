@@ -57,10 +57,10 @@ void transpose(double mat[NDIM][NDIM], double transposed[NDIM][NDIM]) {
 
 int inverse_matrix(double mat[NDIM][NDIM], double inverse[NDIM][NDIM]) {
     double det = determinant4x4(mat);
-    if (fabs(det) < 1e-10) {
-        printf("Matrix is singular and cannot be inverted.\n");
-        return 0;
-    }
+    /* if (fabs(det) < 1e-10) { */
+    /*     printf("Matrix is singular and cannot be inverted.\n"); */
+    /*     return 0; */
+    /* } */
 
     double cofactorMat[NDIM][NDIM];
     cofactor(mat, cofactorMat);

@@ -9,6 +9,9 @@
 #define NDIM 4
 #define TOLERANCE 1e-5
 #define DELTA 1e-7
+#define NX 100
+#define NY 100
+#define NZ 100
 
 /* Matrix functions */
 
@@ -23,8 +26,9 @@ void check_inverse(double gcov[NDIM][NDIM], double gcon[NDIM][NDIM]);
 
 void verify_metric(double gcov[NDIM][NDIM], double gcon[NDIM][NDIM]);
 void calculate_metric(double x[NDIM], double g[NDIM][NDIM], double g_inv[NDIM][NDIM]); 
-void calculate_christoffel(double X[NDIM], double h, double gamma[NDIM][NDIM][NDIM], double g[NDIM][NDIM], double g_inv[NDIM][NDIM]);
+void calculate_christoffel(double X[NDIM], double h, double gamma[NDIM][NDIM][NDIM], double g[NDIM][NDIM], double g_inv[NDIM][NDIM], char *metric);
 void check_symmetry_christoffel(double gamma[NDIM][NDIM][NDIM]);
+void calculate_sphere_metric(double x[NDIM], double g[NDIM][NDIM], double g_inv[NDIM][NDIM]);
 
 /* Tensor functions */
 
@@ -34,7 +38,7 @@ void calculate_ricci(double Riemann[NDIM][NDIM][NDIM][NDIM], double g_inv[NDIM][
 void calculate_einstein_tensor(double Ricci[NDIM][NDIM], double g[NDIM][NDIM], double Ricci_scalar, double G[NDIM][NDIM]);
 void check_riemann_symmetries(double R[NDIM][NDIM][NDIM][NDIM], double tol); 
 double centered_difference(double Gamma_plus_h[NDIM][NDIM][NDIM], double Gamma_minus_h[NDIM][NDIM][NDIM], int rho, int mu, int nu, double h);
-
+void contract_riemann(double Riemann[NDIM][NDIM][NDIM][NDIM], double Ricci[NDIM][NDIM]); 
 /*utils*/
 
 
@@ -45,5 +49,10 @@ double calculate_kretschmann(double Riemann[NDIM][NDIM][NDIM][NDIM], double g_in
 void print_riemann(double Riemann[NDIM][NDIM][NDIM][NDIM]);
 void print_christoffel_matrix(double gamma[NDIM][NDIM][NDIM]);
 void print_matrix(const char* name, double mat[NDIM][NDIM]);
+void Kerr_surfaces(double x[NDIM], double a);
+
+/* Grid functions */
+void init_grid();
+void compute_on_grid();
 #endif
 
