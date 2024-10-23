@@ -60,25 +60,33 @@ void calculate_quadrivector_orbit(double r, double u[NDIM], double g[NDIM][NDIM]
 	}
 }
 
-void calculate_divergence_covariant(double T[NDIM][NDIM], double Gamma[NDIM][NDIM][NDIM], double div_T[NDIM]) {
-    memset(div_T, 0, sizeof(double) * NDIM);
+double calculate_dT_partial(double T[NDIM][NDIM], int mu, int nu, double delta) {
+    double T_plus = (T[mu + 1][nu]); 
+    double T_minus = (T[mu][nu]); 
+    
+    return (T_plus - T_minus) / (2 * DELTA);
+}
 
+
+
+void calculate_covariant_divergence(double T[NDIM][NDIM], double Gamma[NDIM][NDIM][NDIM], double div_T[NDIM], double delta) {
+    memset(div_T, 0, sizeof(double) * NDIM);
+    
     for (int nu = 0; nu < NDIM; nu++) {
         for (int mu = 0; mu < NDIM; mu++) {
-            double dT_partial = (T[mu + 1][nu] - T[mu][nu]) / (2 * DELTA); 
+            double dT_partial = calculate_dT_partial(T, mu, nu, DELTA);
 
             div_T[nu] += dT_partial;
-            if (isnan(div_T[nu])) {
-                div_T[nu] = 0.0;
-                printf("mu = %d, nu = %d\n", mu, nu);
-            }
             for (int lambda = 0; lambda < NDIM; lambda++) {
-                div_T[nu] += Gamma[mu][mu][lambda] * T[lambda][nu];
+                div_T[nu] += Gamma[mu][mu][lambda] * T[lambda][nu]; 
                 div_T[nu] += Gamma[nu][mu][lambda] * T[mu][lambda];
+				printf("Gamma[%d][%d][%d] = %f\n", mu, mu, lambda, Gamma[mu][mu][lambda]);
+				printf("div_T[%d] = %f\n", nu, div_T[nu]);
             }
         }
     }
 }
+
 
 
 
@@ -144,10 +152,7 @@ int main() {
 
     double K = calculate_kretschmann(Riemann, g_inv);
 	double u[NDIM];
-	u[0] = 1.0 / sqrt(-g[0][0]); 
-	u[1] = 0.0; 
-	u[2] = 0.0; 
-	u[3] = 0.0; 
+
 	double rho = 1.0;
 	double p = 0.1;
 	calculate_quadrivector_orbit(x[1], u, g);
@@ -159,8 +164,14 @@ int main() {
 		}
 		printf("\n");
 	}
-
+	double T[NDIM][NDIM];
+	double div_T[NDIM];
 	verify_normalization(g, u);
+	calculate_covariant_divergence(T, gamma, div_T, DELTA);
+	printf("\nDivergence of the Energy-Momentum Tensor:\n");
+	for (int i = 0; i < NDIM; i++) {
+		printf("%12.6f\t", div_T[i]);
+	}
     printf("\nKretschmann Scalar K = %f\n", K);
 
     return 0;
