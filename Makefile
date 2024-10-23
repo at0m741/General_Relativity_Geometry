@@ -10,7 +10,7 @@ SRCS = Matrix.c \
 	   Kerr.c \
 	   main.c
 
-CFLAGS = -O3 -lm -ffast-math -mavx2 -mfma -march=native 
+CFLAGS = -g -O3 -lm -ffast-math -mavx2 -mfma -march=native 
 
 all: $(NAME)
 

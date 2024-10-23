@@ -38,10 +38,10 @@ void calculate_ricci(double Riemann[NDIM][NDIM][NDIM][NDIM], double g_inv[NDIM][
 void calculate_einstein_tensor(double Ricci[NDIM][NDIM], double g[NDIM][NDIM], double Ricci_scalar, double G[NDIM][NDIM]);
 void check_riemann_symmetries(double R[NDIM][NDIM][NDIM][NDIM], double tol); 
 double centered_difference(double Gamma_plus_h[NDIM][NDIM][NDIM], double Gamma_minus_h[NDIM][NDIM][NDIM], int rho, int mu, int nu, double h);
-void contract_riemann(double Riemann[NDIM][NDIM][NDIM][NDIM], double Ricci[NDIM][NDIM]); 
+void contract_riemann(double Riemann[NDIM][NDIM][NDIM][NDIM], double Ricci[NDIM][NDIM], double g_inv[NDIM][NDIM]);
 /*utils*/
 
-
+void generate_3sphere_points(double a, int num_steps); 
 double calculate_kretschmann(double Riemann[NDIM][NDIM][NDIM][NDIM], double g_inv[NDIM][NDIM]);
 
 /* Print functions */

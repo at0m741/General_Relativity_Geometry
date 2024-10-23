@@ -1,33 +1,89 @@
 #include "include.h"
 
-void contract_riemann(double Riemann[NDIM][NDIM][NDIM][NDIM], double Ricci[NDIM][NDIM]) {
+#define NDIM 4
+#define N_r 40    
+#define N_theta 50 
+#define N_phi 50 
+
+void contract_riemann(double Riemann[NDIM][NDIM][NDIM][NDIM], double Ricci[NDIM][NDIM], double g_inv[NDIM][NDIM]) {
     memset(Ricci, 0, sizeof(double) * NDIM * NDIM);
 
     for (int mu = 0; mu < NDIM; mu++) {
         for (int nu = 0; nu < NDIM; nu++) {
-            for (int lambda = 0; lambda < NDIM; lambda++) {
-                Ricci[mu][nu] += Riemann[lambda][mu][lambda][nu] ;
+            for (int rho = 0; rho < NDIM; rho++) {
+                for (int sigma = 0; sigma < NDIM; sigma++) {
+                    Ricci[mu][nu] += g_inv[rho][sigma] * Riemann[rho][sigma][mu][nu];
+                }
             }
         }
     }
-
-    /* for (int mu = 0; mu < NDIM; mu++) { */
-    /*     for (int nu = 0; nu < NDIM; nu++) { */
-    /*         if (fabs(Ricci[mu][nu] - Ricci[nu][mu]) > TOLERANCE) { */
-    /*             printf("Symétrie violée à Ricci[%d][%d] et Ricci[%d][%d]: %e vs %e\n",  */
-    /*                    mu, nu, nu, mu, Ricci[mu][nu], Ricci[nu][mu]); */
-    /*         } */
-    /*  */
-    /*         if (fabs(Ricci[mu][nu]) < TOLERANCE) { */
-    /*             printf("Ricci[%d][%d] est proche de zéro : %e\n", mu, nu, Ricci[mu][nu]); */
-    /*         } */
-    /*     } */
-    /* } */
-    /* printf("Vérification du tenseur de Ricci terminée.\n"); */
 }
 
+
+void calculate_energy_momentum_tensor(double g_inv[NDIM][NDIM], double rho, double p, double u[NDIM], double T[NDIM][NDIM]) {
+    for (int mu = 0; mu < NDIM; mu++) {
+        for (int nu = 0; nu < NDIM; nu++) {
+            T[mu][nu] = (rho + p) * u[mu] * u[nu] + p * g_inv[mu][nu];
+        }
+    }
+}
+
+
+int verify_normalization(double g[NDIM][NDIM], double u[NDIM]) {
+    double result = 0.0;
+    for (int mu = 0; mu < NDIM; mu++) {
+        for (int nu = 0; nu < NDIM; nu++) {
+            result += g[mu][nu] * u[mu] * u[nu];
+        }
+    }
+    if (fabs(result + 1.0) < TOLERANCE) {
+		printf("La condition de normalisation est satisfaite : g_uv u^u u^v = %f\n", result);	
+		return 1;
+    } else {
+        printf("La condition de normalisation n'est pas satisfaite : g_uv u^u u^v = %f\n", result);
+        return 0;
+    }
+}
+
+void calculate_quadrivector_orbit(double r, double u[NDIM], double g[NDIM][NDIM]) {
+    double M = 1.0;
+    double Omega = sqrt(M / (r * r * r)); 
+    double g_tt = g[0][0];
+    double g_phiphi = g[3][3];
+    
+    u[0] = 1.0 / sqrt(- (g_tt + g_phiphi * Omega * Omega));
+    u[1] = 0.0; 
+    u[2] = 0.0; 
+    u[3] = Omega * u[0];
+	for (int i = 0; i < NDIM; i++) {
+		printf("u[%d] = %f\n", i, u[i]);
+	}
+}
+
+void calculate_divergence_covariant(double T[NDIM][NDIM], double Gamma[NDIM][NDIM][NDIM], double div_T[NDIM]) {
+    memset(div_T, 0, sizeof(double) * NDIM);
+
+    for (int nu = 0; nu < NDIM; nu++) {
+        for (int mu = 0; mu < NDIM; mu++) {
+            double dT_partial = (T[mu + 1][nu] - T[mu][nu]) / (2 * DELTA); 
+
+            div_T[nu] += dT_partial;
+            if (isnan(div_T[nu])) {
+                div_T[nu] = 0.0;
+                printf("mu = %d, nu = %d\n", mu, nu);
+            }
+            for (int lambda = 0; lambda < NDIM; lambda++) {
+                div_T[nu] += Gamma[mu][mu][lambda] * T[lambda][nu];
+                div_T[nu] += Gamma[nu][mu][lambda] * T[mu][lambda];
+            }
+        }
+    }
+}
+
+
+
 int main() {
-    double x[NDIM] = {0.0, 40.0, M_PI / 2.0, 0.0};
+    double x[NDIM] = {0.0, 10.0, M_PI / 2.0, 0.0};
     double g[NDIM][NDIM], g_inv[NDIM][NDIM];
     double gamma[NDIM][NDIM][NDIM], Riemann[NDIM][NDIM][NDIM][NDIM];
     double Gamma_plus_h[NDIM][NDIM][NDIM], Gamma_minus_h[NDIM][NDIM][NDIM];
@@ -64,6 +120,7 @@ int main() {
     check_symmetry_christoffel(gamma);
 	
 	double Ricci2[NDIM][NDIM];
+	contract_riemann(Riemann, Ricci2, g_inv);
 	printf("\nRicci Tensor:\n");
 	for (int i = 0; i < NDIM; i++) {
 		for (int j = 0; j < NDIM; j++) {
@@ -86,43 +143,25 @@ int main() {
 	}
 
     double K = calculate_kretschmann(Riemann, g_inv);
+	double u[NDIM];
+	u[0] = 1.0 / sqrt(-g[0][0]); 
+	u[1] = 0.0; 
+	u[2] = 0.0; 
+	u[3] = 0.0; 
+	double rho = 1.0;
+	double p = 0.1;
+	calculate_quadrivector_orbit(x[1], u, g);
+	calculate_energy_momentum_tensor(g_inv, rho, p, u, G);
+	printf("\nEnergy-Momentum Tensor:\n");
+	for (int i = 0; i < NDIM; i++) {
+		for (int j = 0; j < NDIM; j++) {
+			printf("%12.6f\t", G[i][j]);
+		}
+		printf("\n");
+	}
+
+	verify_normalization(g, u);
     printf("\nKretschmann Scalar K = %f\n", K);
-
-
-//Sphere metric
-	//
-	double X[NDIM] = {2.0, M_PI / 4.0, M_PI / 2.0, M_PI};
-	double g_sp[NDIM][NDIM], g_inv_sp[NDIM][NDIM];
-
-	printf("\nSphere Metric:\n");
-	calculate_sphere_metric(X, g_sp, g_inv_sp);
-	verify_metric(g_sp, g_inv_sp);
-
-	printf("Sphere metric g:\n");
-    for (int i = 0; i < NDIM; i++) {
-        for (int j = 0; j < NDIM; j++) {
-            printf("g[%d][%d] = %f\t", i, j, g_sp[i][j]);
-        }
-        printf("\n");
-    }
-    printf("\nInverse Sphere Metric g_inv:\n");
-    for (int i = 0; i < NDIM; i++) {
-        for (int j = 0; j < NDIM; j++) {
-            printf("g_inv[%d][%d] = %f\t", i, j, g_inv_sp[i][j]);
-        }
-        printf("\n");
-    }	
-	printf("\n");
-	double gamma_sp[NDIM][NDIM][NDIM];
-	calculate_christoffel(X, h, gamma_sp, g_sp, g_inv_sp, "3-Sphere");
-	print_christoffel_matrix(gamma_sp);
-	double riemann_sp[NDIM][NDIM][NDIM][NDIM];
-	double gamma_sp_plus_h[NDIM][NDIM][NDIM], gamma_sp_minus_h[NDIM][NDIM][NDIM];	
-	initialize_riemann_tensor(riemann_sp);
-	calculate_christoffel(X, h, gamma_sp_plus_h, g_sp, g_inv_sp, "3-Sphere");	
-	calculate_christoffel(X, -h, gamma_sp_minus_h, g_sp, g_inv_sp, "3-Sphere");
-	calculate_riemann(gamma_sp, gamma_sp_plus_h, gamma_sp_minus_h, riemann_sp, h);
-	print_riemann(riemann_sp);
 
     return 0;
 }
