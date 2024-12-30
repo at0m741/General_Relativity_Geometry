@@ -1,4 +1,5 @@
 #include "include.h"
+#include <SDL2/SDL.h>
 
 #define NDIM 4
 #define N_r 40    
@@ -80,49 +81,34 @@ void calculate_covariant_divergence(double T[NDIM][NDIM], double Gamma[NDIM][NDI
             for (int lambda = 0; lambda < NDIM; lambda++) {
                 div_T[nu] += Gamma[mu][mu][lambda] * T[lambda][nu]; 
                 div_T[nu] += Gamma[nu][mu][lambda] * T[mu][lambda];
-				printf("Gamma[%d][%d][%d] = %f\n", mu, mu, lambda, Gamma[mu][mu][lambda]);
-				printf("div_T[%d] = %f\n", nu, div_T[nu]);
             }
         }
     }
 }
 
 
-
-
 int main() {
-    double x[NDIM] = {0.0, 10.0, M_PI / 2.0, 0.0};
+    double x[NDIM] = {0.0, 6.0, M_PI / 2.0, 0.0};
     double g[NDIM][NDIM], g_inv[NDIM][NDIM];
     double gamma[NDIM][NDIM][NDIM], Riemann[NDIM][NDIM][NDIM][NDIM];
     double Gamma_plus_h[NDIM][NDIM][NDIM], Gamma_minus_h[NDIM][NDIM][NDIM];
     double Ricci[NDIM][NDIM], G[NDIM][NDIM];
-    double h = 1e-9, Lambda = 1.0;
+    double h = 1e-4, Lambda = 1.0;
 
     calculate_metric(x, g, g_inv);
     verify_metric(g, g_inv);
 
-    printf("Metric g:\n");
-    for (int i = 0; i < NDIM; i++) {
-        for (int j = 0; j < NDIM; j++) {
-            printf("g[%d][%d] = %f\t", i, j, g[i][j]);
-        }
-        printf("\n");
-    }
-    printf("\nInverse Metric g_inv:\n");
-    for (int i = 0; i < NDIM; i++) {
-        for (int j = 0; j < NDIM; j++) {
-            printf("g_inv[%d][%d] = %f\t", i, j, g_inv[i][j]);
-        }
-        printf("\n");
-    }
-
     calculate_christoffel(x, h, gamma, g, g_inv, "Kerr");
     print_christoffel_matrix(gamma);
-
+	
     initialize_riemann_tensor(Riemann);
     calculate_christoffel(x, h, Gamma_plus_h, g, g_inv, "Kerr");
+	printf("\nChristoffel Symbols Gamma_plus_h:\n");
+	print_christoffel_matrix(Gamma_plus_h);
     calculate_christoffel(x, -h, Gamma_minus_h, g, g_inv, "Kerr");
-    calculate_riemann(gamma, Gamma_plus_h, Gamma_minus_h, Riemann, h);
+	printf("\nChristoffel Symbols Gamma_minus_h:\n");
+	print_christoffel_matrix(Gamma_minus_h);
+    calculate_riemann(gamma, Gamma_plus_h, Gamma_minus_h, Riemann, h, x);
     print_riemann(Riemann);
     check_riemann_symmetries(Riemann, TOLERANCE);
     check_symmetry_christoffel(gamma);
@@ -149,30 +135,6 @@ int main() {
 		}
 		printf("\n");
 	}
-
-    double K = calculate_kretschmann(Riemann, g_inv);
-	double u[NDIM];
-
-	double rho = 1.0;
-	double p = 0.1;
-	calculate_quadrivector_orbit(x[1], u, g);
-	calculate_energy_momentum_tensor(g_inv, rho, p, u, G);
-	printf("\nEnergy-Momentum Tensor:\n");
-	for (int i = 0; i < NDIM; i++) {
-		for (int j = 0; j < NDIM; j++) {
-			printf("%12.6f\t", G[i][j]);
-		}
-		printf("\n");
-	}
-	double T[NDIM][NDIM];
-	double div_T[NDIM];
-	verify_normalization(g, u);
-	calculate_covariant_divergence(T, gamma, div_T, DELTA);
-	printf("\nDivergence of the Energy-Momentum Tensor:\n");
-	for (int i = 0; i < NDIM; i++) {
-		printf("%12.6f\t", div_T[i]);
-	}
-    printf("\nKretschmann Scalar K = %f\n", K);
 
     return 0;
 }
